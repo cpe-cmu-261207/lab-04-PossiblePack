@@ -1,68 +1,37 @@
 import { useState } from "react";
-import {CourseCard} from "./components/CourseCard";
-
+import { CourseCard } from "./components/CourseCard"
 function App() {
-  const grade = ["A", "B+", "B", "C+", "C", "D+", "D", "F", "W"];
+  const grade = [{key: 'A', val: 4.0}, {key: 'B+', val: 3.5}, {key: 'B', val: 3.0}, {key: 'C+', val: 2.5},
+                 {key: 'C', val: 2.0} , {key: 'D+', val: 1.5}, {key: 'D', val: 1.0}, {key: 'F', val: 0.0}, 
+                 {key: 'W', val: -1}];
   const credit = [1, 2, 3];
-
   const [myCourses, setMyCourse] = useState([]);
-  const [inputData, setInputData] = useState({name:"",grd:"A",crd:"1"});
-  const [GPA, setGPA] = useState(4.0);
+  const [inputData, setInputData] = useState({});   
+  const [GPA, setGPA] = useState(0.00);
+
+  let name = ""
+  let a = ""
+  let g = 0
+  let c = 0
 
   /**
    * Calculate the GPA of current courses
    * @returns the GPA of current courses
    */
-  function calculateGPA(cc) {
+  function calculateGPA(course) {
     // TODO
-    var r_gpa = 0
-    var r_cre  = 0 
-    var cal_gpa = 0
-    cc.forEach((item) => {
-      switch(item.grd){
-        case 'A' :
-          r_gpa = 4
-          r_cre += Number(item.crd) 
-          cal_gpa += r_gpa * Number(item.crd)
-          break
-        case 'B+' :
-          r_gpa = 3.5
-          r_cre += Number(item.crd)
-          cal_gpa += r_gpa * Number(item.crd)
-          break
-        case 'B' :
-          r_gpa = 3
-          r_cre += Number(item.crd)
-          cal_gpa += r_gpa * Number(item.crd)
-          break
-        case 'C+' :
-          r_gpa = 2.5
-          r_cre += Number(item.crd)
-          cal_gpa += r_gpa * Number(item.crd)
-          break
-        case 'C' :
-          r_gpa = 2
-          r_cre += Number(item.crd)
-          cal_gpa += r_gpa * Number(item.crd)
-          break
-        case 'D+' :
-          r_gpa = 1.5
-          r_cre += Number(item.crd)
-          cal_gpa += r_gpa * Number(item.crd)
-          break
-        case 'D' :
-          r_gpa = 1
-          r_cre += Number(item.crd)
-          cal_gpa += r_gpa * Number(item.crd)
-          break
-        case 'F' :
-          r_gpa = 0
-          r_cre += Number(item.crd)
-          cal_gpa += r_gpa * Number(item.crd)
-          break
-      }  
-    });
-    setGPA(cal_gpa / r_cre) 
+    let grade = 0.00
+    let credit = 0
+    course.forEach(obj => {
+      if(Number(obj.grade) !== -1){
+        grade += Number(obj.grade) * Number(obj.credit)
+        credit += Number(obj.credit)
+      }
+    })
+    grade  = Number(grade) / Number(credit)
+    if(Number(grade) >= 0)
+      setGPA(Number(grade.toPrecision(3)))
+    else setGPA(0.00)
   }
 
   /**
@@ -73,11 +42,16 @@ function App() {
   function addCourse(event) {
     event.preventDefault();
     // TODO
-    console.log(inputData.name)
-    const course = [...myCourses,inputData]
-    setMyCourse(course)
+    const course = {
+      id: name,
+      alphabet: a, 
+      grade: g,
+      credit: c
+    }
+    const newCourse = [...myCourses,course]
+      setMyCourse(newCourse)
     // recalculate GPA
-    calculateGPA(course);
+    calculateGPA(newCourse);
   }
 
   /**
@@ -87,11 +61,11 @@ function App() {
    */
   function onDeleteCourse(id) {
     // TODO
-    const course = myCourses.filter(item => {
-      return item.name !== id
+    const retain = myCourses.filter(obj =>{
+      return obj.id !== id
     })
-    setMyCourse(course)
-    calculateGPA(course)
+    setMyCourse(retain)
+    calculateGPA(retain);
   }
 
   return (
@@ -102,34 +76,55 @@ function App() {
       <div className="h-2/3 md:w-2/4 p-3 rounded-lg mx-auto overflow-auto">
         <h1 className="text-2xl my-3">My courses</h1>
         {/* TODO display courses */}
-        {myCourses.map(item => {
-          return <CourseCard name ={item.name} grd = {item.grd} crd ={item.crd} del={onDeleteCourse} />
+        {myCourses.map(obj => {
+          const delBtn = document.createElement('button')
+          delBtn.innerHTML = 'X'
+          delBtn.onclick = () =>{
+            onDeleteCourse(obj.id)
+          }
+          return <CourseCard subj={obj.id} grade = {obj.alphabet} credit = {obj.credit} del = {onDeleteCourse}/>
         })}
-        <select onChange = { e => 
-            setInputData({...inputData,crd: e.currentTarget.value}) 
-          }>
-          {credit.map(item => {
-            return <option value={item}>{item}</option>
-          })}
-        </select>     
-        <select onChange = { e => 
-           setInputData({...inputData,grd: e.currentTarget.value}) 
-          }>
-          {grade.map(item => {
-            return <option value={item}>{item}</option>
-          })}
-        </select>    
-        <form onSubmit ={
-          e => addCourse(e)}>
-          <input type="text" onChange = { e => 
-            setInputData({...inputData,name: e.currentTarget.value}) 
-          }/>
-            <button type="submit">+</button>
-       </form>
       </div>
       {/* TODO add course input form */}
+      <form onSubmit = {e => {
+        addCourse(e)
+        document.getElementById("name").value =''
+        document.getElementById("grade").selectedIndex = 0
+        document.getElementById("w").selectedIndex = 0
+        }}>
+          <table id="form">
+            <tr>
+              <th>ชื่อวิชา</th>
+              <th>เกรดที่ได้รับ</th>
+              <th>หน่วยกิต</th>
+            </tr>
+            <tr>
+              <td>
+              <input id="name" type="text" placeholder="ชื่อวิชา" onChange = {(e)=>{name = e.currentTarget.value}}/>
+              </td>
+              <td>
+                <select id="grade" onChange = {(e)=>{
+                g = e.currentTarget.value
+                a = e.currentTarget.options[e.currentTarget.selectedIndex].text
+                }}>
+                <option value = "-2"></option>
+                {grade.map((item) => { return <option value={item.val} >{item.key}</option> })}
+                </select>
+              </td>
+              <td>
+                <select id="w" onChange = {(e)=>{c = e.currentTarget.value}}>
+                <option value = "0"></option>
+                {credit.map((item) => {return <option value = {item}>{item}</option>})}
+                </select>
+              </td>
+              <td>
+              <button type = "submit">Add</button>
+              </td>
+            </tr>
+          </table>
+      </form>
       {/* TODO display calculated GPA */}
-      <p>{GPA}</p>
+        <h1 className="text-2xl my-3">GPA :{GPA.toFixed(2)}</h1>
     </div>
   );
 }
